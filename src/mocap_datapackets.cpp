@@ -160,6 +160,15 @@ void MoCapDataFormat::parse()
 
   // get latency
   read_and_seek(model.latency);
+
+  // TODO: Parse timing data
+  seek(2);
+  float a;
+  read_and_seek(a);
+  seek(8);
+  double b;
+  read_and_seek(b);
+  ROS_INFO("A B = %f\t%lf", a, b);
 }
 
 

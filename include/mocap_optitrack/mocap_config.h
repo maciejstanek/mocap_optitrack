@@ -74,7 +74,7 @@ class PublishedRigidBody
 
   public:
   PublishedRigidBody(XmlRpc::XmlRpcValue &);
-  void publish(RigidBody &);
+  void publish(RigidBody &, float latency);
 };
 
 typedef std::map<int, PublishedRigidBody> RigidBodyMap;

@@ -81,7 +81,7 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
   }
 }
 
-void PublishedRigidBody::publish(RigidBody &body)
+void PublishedRigidBody::publish(RigidBody &body, float latency)
 {
   // don't do anything if no new data was provided
   if (!body.has_data())

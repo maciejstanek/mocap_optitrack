@@ -50,6 +50,7 @@
 
 const std::string POSE_TOPIC_PARAM_NAME = "pose";
 const std::string POSE2D_TOPIC_PARAM_NAME = "pose2d";
+const std::string SPEED2D_TOPIC_PARAM_NAME = "speed2d";
 const std::string CHILD_FRAME_ID_PARAM_NAME = "child_frame_id";
 const std::string PARENT_FRAME_ID_PARAM_NAME = "parent_frame_id";
 
@@ -58,6 +59,7 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
   // load configuration for this rigid body from ROS
   publish_pose = validateParam(config_node, POSE_TOPIC_PARAM_NAME);
   publish_pose2d = validateParam(config_node, POSE2D_TOPIC_PARAM_NAME);
+  publish_speed2d = validateParam(config_node, SPEED2D_TOPIC_PARAM_NAME);
   // only publish tf if a frame ID is provided
   publish_tf = (validateParam(config_node, CHILD_FRAME_ID_PARAM_NAME) && 
                validateParam(config_node, PARENT_FRAME_ID_PARAM_NAME));
@@ -74,6 +76,12 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
     pose2d_pub = n.advertise<geometry_msgs::Pose2D>(pose2d_topic, 1000);
   }
 
+  if (publish_speed2d)
+  {
+    speed2d_topic = (std::string&) config_node[SPEED2D_TOPIC_PARAM_NAME];
+    speed2d_pub = n.advertise<geometry_msgs::Pose2D>(speed2d_topic, 1000);
+  }
+
   if (publish_tf)
   {
     child_frame_id = (std::string&) config_node[CHILD_FRAME_ID_PARAM_NAME];
@@ -81,7 +89,7 @@ PublishedRigidBody::PublishedRigidBody(XmlRpc::XmlRpcValue &config_node)
   }
 }
 
-void PublishedRigidBody::publish(RigidBody &body, float latency)
+void PublishedRigidBody::publish(RigidBody &body, float associatedTimestamp)
 {
   // don't do anything if no new data was provided
   if (!body.has_data())
@@ -95,7 +103,10 @@ void PublishedRigidBody::publish(RigidBody &body, float latency)
   }
 
   // TODO Below was const, see if there a way to keep it like that.
-  geometry_msgs::PoseStamped pose = body.get_ros_pose();
+  // geometry_msgs::PoseStamped pose = body.get_ros_pose();
+  pose = body.get_ros_pose();
+  timestamp = associatedTimestamp;
+  float delta = timestamp - last_timestamp;
 
   if (publish_pose)
   {
@@ -103,7 +114,7 @@ void PublishedRigidBody::publish(RigidBody &body, float latency)
     pose_pub.publish(pose);
   }
 
-  if (!publish_pose2d && !publish_tf)
+  if (!publish_pose2d && !publish_speed2d && !publish_tf)
   {
     // nothing to do, bail early
     return;
@@ -114,7 +125,11 @@ void PublishedRigidBody::publish(RigidBody &body, float latency)
                    pose.pose.orientation.z,
                    pose.pose.orientation.w);
 
-  // publish 2D pose
+  tf::Quaternion q_last(last_pose.pose.orientation.x,
+                   last_pose.pose.orientation.y,
+                   last_pose.pose.orientation.z,
+                   last_pose.pose.orientation.w);
+
   if (publish_pose2d)
   {
     geometry_msgs::Pose2D pose2d;
@@ -122,6 +137,16 @@ void PublishedRigidBody::publish(RigidBody &body, float latency)
     pose2d.y = pose.pose.position.y;
     pose2d.theta = tf::getYaw(q);
     pose2d_pub.publish(pose2d);
+  }
+
+  if (publish_speed2d)
+  {
+    geometry_msgs::Pose2D speed2d;
+    speed2d.x = (pose.pose.position.x - last_pose.pose.position.x) / delta;
+    speed2d.y = (pose.pose.position.y - last_pose.pose.position.y) / delta;
+    // TODO: Handle angle discontinuities
+    speed2d.theta = (tf::getYaw(q) - tf::getYaw(q_last)) / delta;
+    speed2d_pub.publish(speed2d);
   }
 
   if (publish_tf)
@@ -137,6 +162,9 @@ void PublishedRigidBody::publish(RigidBody &body, float latency)
     ros::Time timestamp(ros::Time::now());
     tf_pub.sendTransform(tf::StampedTransform(transform, timestamp, parent_frame_id, child_frame_id));
   }
+
+  last_pose = pose;
+  last_timestamp = timestamp;
 }
 
 bool PublishedRigidBody::validateParam(XmlRpc::XmlRpcValue &config_node, const std::string &name)

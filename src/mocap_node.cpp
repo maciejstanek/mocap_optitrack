@@ -69,6 +69,9 @@ void processMocapData( const char** mocap_model,
           format.parse();
           packetread = true;
           numberOfPackets++;
+          // TODO: Fix the jitter
+          float timestamp = format.timestamp;
+          //float timestamp = (format.realTimestamp + format.timestamp) / 2.0;
 
           if( format.model.numRigidBodies > 0 )
           {
@@ -79,7 +82,8 @@ void processMocapData( const char** mocap_model,
 
               if (item != published_rigid_bodies.end())
               {
-                  item->second.publish(format.model.rigidBodies[i], format.model.latency);
+
+                  item->second.publish(format.model.rigidBodies[i], timestamp);
               }
             }
           }

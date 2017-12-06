@@ -19,7 +19,7 @@ RigidBody::~RigidBody()
 const geometry_msgs::PoseStamped RigidBody::get_ros_pose()
 {
   geometry_msgs::PoseStamped ros_pose;
-  ros_pose.header.stamp = ros::Time::now();
+  ros_pose.header.stamp = ros::Time::now(); // TODO Set the real time stamp
   // y & z axes are swapped in the Optitrack coordinate system
   ros_pose.pose.position.x = pose.position.x;
   ros_pose.pose.position.y = -pose.position.z;
@@ -161,14 +161,11 @@ void MoCapDataFormat::parse()
   // get latency
   read_and_seek(model.latency);
 
-  // TODO: Parse timing data
+  // parse timing data
   seek(2);
-  float a;
-  read_and_seek(a);
+  read_and_seek(realTimestamp);
   seek(8);
-  double b;
-  read_and_seek(b);
-  ROS_INFO("A B = %f\t%lf", a, b);
+  read_and_seek(timestamp);
 }
 
 

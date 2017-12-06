@@ -50,6 +50,8 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include "mocap_datapackets.h"
+#include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseStamped.h>
 
 class PublishedRigidBody
 {
@@ -58,6 +60,7 @@ class PublishedRigidBody
 
   std::string pose_topic;
   std::string pose2d_topic;
+  std::string speed2d_topic;
   std::string parent_frame_id;
   std::string child_frame_id;
 
@@ -65,16 +68,24 @@ class PublishedRigidBody
   bool publish_pose;
   bool publish_tf;
   bool publish_pose2d;
+  bool publish_speed2d;
 
   tf::TransformBroadcaster tf_pub;
   ros::Publisher pose_pub;
   ros::Publisher pose2d_pub;
+  ros::Publisher speed2d_pub;
 
   bool validateParam(XmlRpc::XmlRpcValue &, const std::string &);
 
+  // The last two recorded poses are required to calculate speed
+  geometry_msgs::PoseStamped pose;
+  geometry_msgs::PoseStamped last_pose;
+  double last_timestamp;
+  double timestamp;
+
   public:
   PublishedRigidBody(XmlRpc::XmlRpcValue &);
-  void publish(RigidBody &, float latency);
+  void publish(RigidBody &, float associatedTimestamp);
 };
 
 typedef std::map<int, PublishedRigidBody> RigidBodyMap;

@@ -80,7 +80,7 @@ class RigidBody
     ~RigidBody();
 
     int ID;
-    
+
     Pose pose; 
 
     int NumberOfMarkers;
@@ -146,6 +146,9 @@ class MoCapDataFormat
 
     int frameNumber;
     ModelFrame model;
+    
+    double timestamp;
+    float realTimestamp;
 
   private:
     void seek(size_t count);

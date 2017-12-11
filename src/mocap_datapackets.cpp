@@ -124,7 +124,7 @@ void MoCapDataFormat::parse()
   ROS_DEBUG("Number of rigid bodies: %d\n", model.numRigidBodies);
 
   model.rigidBodies = new RigidBody[model.numRigidBodies];
-  for (int m = 0; m < model.numRigidBodies; m++)
+  for (int m = 0; m < 1/*model.numRigidBodies*/; m++)
   {
     // read id, position and orientation of each rigid body
     read_and_seek(model.rigidBodies[m].ID);

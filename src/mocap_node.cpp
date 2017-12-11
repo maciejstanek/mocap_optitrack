@@ -54,7 +54,6 @@ void processMocapData( const char** mocap_model,
     {
       // Receive data from mocap device
       numBytes = multicast_client_socket.recv();
-
       // Parse mocap data
       if( numBytes > 0 )
       {
